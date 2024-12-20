@@ -1,0 +1,13 @@
+{
+  "token": "ya29.a0ARW5m75dmrNFxNfq4nvoJo09JZw3K9gSxrVLfRti86Yd-P00K1JMMivb9S271JE84fWHDKGrq7ac3cmIq__PPz8JndWPxTYtBVWfsi8Hn_cOHVTh9fCxc9H1U6OaBG6c6S-yjI-GtqKVe6QYPBH-IXP7KBlMJFh968BAdB_5aCgYKAWwSARASFQHGX2MiWOrJqSu2idukRcvwJAiX2Q0175",
+  "refresh_token": "1//0c5rXez_9HevjCgYIARAAGAwSNwF-L9Irhty7_h1-r1k2TVRd_WoMRbuxFEh6HSDYtYn--C85ItgFnaZrydgw5vfnQcflxi-_oXo",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "client_id": "806325488837-4o44d2cpmf0mqj162tqte1rh7k8r3lfa.apps.googleusercontent.com",
+  "client_secret": "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",
+  "scopes": [
+    "https://www.googleapis.com/auth/meetings.space.created"
+  ],
+  "universe_domain": "googleapis.com",
+  "account": "",
+  "expiry": "2024-12-16T17:12:21.355333Z"
+}
