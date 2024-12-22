@@ -1,5 +1,7 @@
+import pprint
 import sqlite3
 from datetime import datetime
+import datetime as dtm
 from datetime import time
 from aiogram.fsm.context import FSMContext
 from aiogram import Router, F, types
@@ -23,9 +25,11 @@ con = sqlite3.connect("db/users.db", check_same_thread=False)
 cur = con.cursor()
 db_session.global_init("db/users.db")
 
+
 class Form(StatesGroup):
     data = State()
-
+    name = State()
+    final = State()
     #db_sess = db_session.create_session()
     #shedules = db_sess.query(Task).filter(Task.user_id == msg.from_user.id).all()
 
@@ -51,7 +55,7 @@ async  def get_shedule(msg: Message):
 
 @router.message(Command("start"))
 async def start(msg: Message):
-    await msg.answer("Привет! Чтобы создать встречу, воспользуйся командой /create_meet", reply_markup =types.ReplyKeyboardRemove())
+    await msg.answer("Привет! Чтобы создать встречу, воспользуйся командой /create_meet ", reply_markup =types.ReplyKeyboardRemove())
 
 
 @router.message(Command("create_meet"))
@@ -75,31 +79,36 @@ async def create_meet(msg: Message):
 @router.callback_query(F.data.split()[0] == "every")
 async def get_every_meets(clq: CallbackQuery):
     await clq.answer()
+    await clq.message.delete()
     data = clq.data
     if int(data.split()[-1]) < 0:
         data = str(clq.data.split()[0]) + " 5"
     else:
         keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
-        keyboard_inline.inline_keyboard.append([InlineKeyboardButton(text="⬅", callback_data=("every " + str(int(data.split()[-1]) - 5))),
-                                                InlineKeyboardButton(text="➡", callback_data=("every " + str(int(data.split()[-1]) + 5)))])
         db_sess = db_session.create_session()
         print(clq.data)
-        meets = list(db_sess.query(Task).filter(Task.shedule_type.ilike("every%")).slice(start=int(data.split()[-1]), stop=int(data.split()[-1]) + 5))
+        meets = list(db_sess.query(Task).filter(Task.shedule_type.ilike("every%") & (Task.chat_id == clq.message.chat.id)).slice(start=int(data.split()[-1]), stop=int(data.split()[-1]) + 5))
         db_sess.close()
         if meets:
             for meet in meets[int(data[-1]): len(meets) - 1]:
-                await clq.message.answer(f"Время - {meet.shedule_time} \n"
+                print(meet.meeting_name)
+                await clq.message.answer(f"<b>{meet.meeting_name} </b>"
+                                         f"\n"
+                                         f"Время - {str(meet.shedule_time)[:-3]} \n"
                                          f"Дата - {meet.shedule_date} \n"
                                          f"Частота повторений - {await get_frequency_of_meetings(str(meet.shedule_type))} \n"
                                          f"Ссылка на встречу - {meet.meet_url}", reply_markup=InlineKeyboardMarkup(
-                    inline_keyboard=[[InlineKeyboardButton(text="Удалить", callback_data=("delete " + str(meet.id)))]]))
+                    inline_keyboard=[[InlineKeyboardButton(text="Удалить", callback_data=("delete " + str(meet.id)))]]),
+                                         parse_mode="HTML")
             meet = meets[-1]
             keyboard_inline.inline_keyboard.insert(0, [
                 InlineKeyboardButton(text="Удалить", callback_data=("delete " + str(meet.id)))])
-            await clq.message.answer(f"Время - {meet.shedule_time} \n"
+            await clq.message.answer(f"<b>{meet.meeting_name} </b>"
+                                     f"\n"
+                                     f"Время - {str(meet.shedule_time)[:-3]} \n"
                                      f"Дата - {meet.shedule_date} \n"
                                      f"Частота повторений - {await get_frequency_of_meetings(str(meet.shedule_type))} \n"
-                                     f"Ссылка на встречу - {meet.meet_url}", reply_markup=keyboard_inline)
+                                     f"Ссылка на встречу - {meet.meet_url}", reply_markup=keyboard_inline, parse_mode="HTML")
         else:
             keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
             keyboard_inline.inline_keyboard.append(
@@ -111,34 +120,49 @@ async def get_every_meets(clq: CallbackQuery):
 @router.callback_query(F.data.split()[0] == "once")
 async def get_once_meets(clq: CallbackQuery):
     await clq.answer()
+    await clq.message.delete()
     data = clq.data
+    move = InlineKeyboardMarkup(inline_keyboard=[])
+    move.inline_keyboard.append(
+        [InlineKeyboardButton(text="⬅", callback_data=("once " + str(int(data.split()[-1]) - 5))),
+         InlineKeyboardButton(text="➡", callback_data=("once " + str(int(data.split()[-1]) + 5)))])
     if int(data.split()[-1]) < 0:
         data = str(clq.data.split()[0]) + " 5"
-    else:
-        keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
-        keyboard_inline.inline_keyboard.append([InlineKeyboardButton(text="⬅", callback_data=("once " + str(int(data.split()[-1]) - 5))),
-                                                InlineKeyboardButton(text="➡", callback_data=("once " + str(int(data.split()[-1]) + 5)))])
-        db_sess = db_session.create_session()
-        print(clq.data)
-        meets = list(db_sess.query(Task).filter(Task.shedule_type.ilike("once%")).slice(start=int(data.split()[-1]), stop=int(data.split()[-1]) + 5))
-        db_sess.close()
-        if meets:
-            for meet in meets[int(data[-1]): len(meets) - 1]:
-                await clq.message.answer(f"Время - {meet.shedule_time} \n"
-                                         f"Дата - {meet.shedule_date} \n"
-                                         f"Ссылка на встречу - {meet.meet_url}", reply_markup=InlineKeyboardMarkup(
-                    inline_keyboard=[[InlineKeyboardButton(text="Удалить", callback_data=("delete " + str(meet.id)))]]))
-            meet = meets[-1]
-            keyboard_inline.inline_keyboard.insert(0, [
-                InlineKeyboardButton(text="Удалить", callback_data=("delete " + str(meet.id)))])
-            await clq.message.answer(f"Время - {meet.shedule_time} \n"
+        move = InlineKeyboardMarkup(inline_keyboard=[])
+        move.inline_keyboard.append(
+            [InlineKeyboardButton(text="➡", callback_data=("once " + str(int(data.split()[-1]) + 5)))])
+    keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
+    db_sess = db_session.create_session()
+    print(data)
+    meets = list(db_sess.query(Task).filter(Task.shedule_type.ilike("once%") & (Task.chat_id == clq.message.chat.id)).slice(start=int(data.split()[-1]), stop=int(data.split()[-1]) + 5))
+    db_sess.close()
+    if meets:
+        for meet in meets[int(data[-1]): len(meets) - 1]:
+            a = await clq.message.answer(f"<b>{meet.meeting_name} </b>"
+                                     f"\n"
+                                     f"Время - {str(meet.shedule_time)[:-3]} \n"
                                      f"Дата - {meet.shedule_date} \n"
-                                     f"Ссылка на встречу - {meet.meet_url}", reply_markup=keyboard_inline)
-        else:
-            keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
-            keyboard_inline.inline_keyboard.append(
-                [InlineKeyboardButton(text="⬅", callback_data=("once " + str(int(data.split()[-1]) - 5)))])
-            await clq.message.answer(f"Конец списка конференций", reply_markup=keyboard_inline)
+                                     f"Ссылка на встречу - {meet.meet_url}", reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[[InlineKeyboardButton(text="Удалить", callback_data=("delete " + str(meet.id)))]]), parse_mode="HTML")
+            print(a)
+        meet = meets[-1]
+        keyboard_inline.inline_keyboard.append(
+            [InlineKeyboardButton(text="Удалить", callback_data=("delete " + str(meet.id)))])
+        await clq.message.answer(f"<b>{meet.meeting_name} </b>"
+                                 f"\n"
+                                 f"Время - {str(meet.shedule_time)[:-3]} \n"
+                                 f"Дата - {meet.shedule_date} \n"
+                                 f"Ссылка на встречу - {meet.meet_url}", reply_markup=keyboard_inline, parse_mode="HTML")
+        keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
+        keyboard_inline.inline_keyboard.append(
+            [InlineKeyboardButton(text="⬅", callback_data=("once " + str(int(data.split()[-1]) - 5))),
+             InlineKeyboardButton(text="➡", callback_data=("once " + str(int(data.split()[-1]) + 5)))])
+        await clq.message.answer("Используйте данные кнопки для навигации", reply_markup=move)
+    else:
+        move = InlineKeyboardMarkup(inline_keyboard=[])
+        move.inline_keyboard.append(
+            [InlineKeyboardButton(text="⬅", callback_data=("once " + str(int(data.split()[-1]) - 5)))])
+        await clq.message.answer(f"Конец списка конференций", reply_markup=move)
 
 
 
@@ -154,11 +178,10 @@ async def delete_meet(clq: CallbackQuery):
     await clq.message.delete()
 
 
-@router.callback_query(F.data.split()[0] == "repeat")
-async def add_new_meet(clq: CallbackQuery, state: FSMContext, ):
-    await clq.answer(show_alert=False)
+@router.message(Form.name)
+async def setting_name(msg: Message, state: FSMContext):
     task = await state.get_value("task")
-    task.shedule_type = clq.data.split()[1]
+    task.meeting_name = msg.text
     tsk = Task(
         user_id=task.user_id,
         meeting_name=task.meeting_name,
@@ -167,28 +190,81 @@ async def add_new_meet(clq: CallbackQuery, state: FSMContext, ):
         shedule_time=str(task.shedule_time),
         shedule_date=task.shedule_date,
         shedule_type=task.shedule_type,
-        chat_id=clq.message.chat.id
+        chat_id=msg.chat.id
 
     )
     db_sess = db_session.create_session()
-
-    await clq.message.answer(f"Встреча успешо добавлена \n"
-                             f"Время - {str(task.shedule_time)} \n"
+    msg_id = await state.get_value("msg_id")
+    for x in msg_id[1:]:
+        await msg.bot.delete_message(chat_id=msg.chat.id, message_id=x)
+    await msg.bot.edit_message_text(f"Встреча успешо добавлена \n"
+                             f"<b>{tsk.meeting_name}\n </b>"
+                             f"\n"
+                             f"Время - {str(task.shedule_time)[:-3]} \n"
                              f"Дата - {tsk.shedule_date} \n"
-                             f"Ссылка - {task.meet_url}")
+                             f"Ссылка - {task.meet_url}", parse_mode="HTML", message_id=msg_id[0], chat_id= msg.chat.id)
     db_sess.add(tsk)
     db_sess.commit()
     db_sess.close()
+    await state.clear()
 
 
 @router.message(Command("plane_meet"))
 async def nav_cal_handler(message: Message, state: FSMContext):
-    await message.answer(
-        "Пожалуйста выберите дату: ",
-        reply_markup=await SimpleCalendar(locale="RU").start_calendar()
+    keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
+    keyboard_inline.inline_keyboard.append(
+        [InlineKeyboardButton(text="Одноразовая", callback_data="repeat once Одноразовая"),
+         InlineKeyboardButton(text="Каждый день", callback_data="repeat everyday Каждый день")])
+    keyboard_inline.inline_keyboard.append(
+        [InlineKeyboardButton(text="Раз в неделю", callback_data="repeat everyweek Раз в неделю"),
+         InlineKeyboardButton(text="Каждый месяц", callback_data="repeat everymonth Каждый месяц")])
+    keyboard_inline.inline_keyboard.append([InlineKeyboardButton(text="Отмена", callback_data="stop")])
+    await message.answer("Выберите количество повторений встречи: ", reply_markup=keyboard_inline)
+
+@router.callback_query(F.data.split()[1] == "everyday")
+async def everyday_meeting_plane(clq: CallbackQuery, state: FSMContext):
+    await clq.answer(show_alert=False)
+    tsk = Task(shedule_type="everyday")
+    await state.set_data({"task": tsk})
+    msg = await clq.bot.edit_message_text(
+        f'Пожалуйста напишите время встречи в формате hh:mm \n'
+        f'Например 11:20', chat_id=clq.message.chat.id,
+        message_id=clq.message.message_id
     )
+    await state.update_data({"msg_id": [msg.message_id]})
+    msg = clq.message
+    meet = await sample_create_space()
+    st = await state.get_value("task")
+    task = Task(
+        shedule_type=st.shedule_type,
+        user_id=msg.from_user.id,
+        meet_url=meet.meeting_uri,
+        meeting_code=meet.meeting_code,
+        meeting_name=meet.name,
+        shedule_date="everyday"
 
+    )
+    await state.update_data({"task": task})
+    await state.set_state(Form.data)
 
+@router.callback_query(F.data.split()[1] == "everyweek")
+async def everyweek_meeting_plane(clq: CallbackQuery, state: FSMContext):
+    await clq.answer(show_alert=False)
+    tsk = Task(shedule_type="everyweek")
+    await state.set_data({"task": tsk})
+@router.callback_query(F.data.split()[1] == "once")
+async def one_meeting_plane(clq: CallbackQuery, state: FSMContext):
+    await clq.answer(show_alert=False)
+    tsk = Task(
+        shedule_type="once"
+    )
+    await state.set_data({"task": tsk})
+    await clq.bot.edit_message_text(
+        "Пожалуйста выберите дату: ",
+        reply_markup=await SimpleCalendar(locale="RU").start_calendar(),
+        message_id=clq.message.message_id,
+        chat_id=clq.message.chat.id
+    )
 
 @router.callback_query(SimpleCalendarCallback.filter())
 async def process_simple_calendar(callback_query: CallbackQuery, callback_data: CallbackData, state: FSMContext):
@@ -199,43 +275,66 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
     calendar.set_dates_range(datetime(2022, 1, 1), datetime(2025, 12, 31))
     selected, date = await calendar.process_selection(callback_query, callback_data)
     if selected:
-        await callback_query.message.delete()
-        msg = callback_query.message
-        meet = await sample_create_space()
-        task = Task(
-            user_id=msg.from_user.id,
-            meet_url=meet.meeting_uri,
-            meeting_code=meet.meeting_code,
-            meeting_name=meet.name,
-            shedule_date=date.strftime("%d/%m/%Y")
+        if date.date() >= dtm.date.today():
+            msg = await callback_query.bot.edit_message_text(
+                f'Вы выбрали {date.strftime("%d/%m/%Y")} \n'
+                f'Пожалуйста напишите время встречи в формате hh:mm \n'
+                f'Например 11:20', chat_id=callback_query.message.chat.id,
+                message_id=callback_query.message.message_id
+            )
+            await state.update_data({"msg_id": [msg.message_id]})
+            msg = callback_query.message
+            meet = await sample_create_space()
+            st = await state.get_value("task")
+            task = Task(
+                shedule_type=st.shedule_type,
+                user_id=msg.from_user.id,
+                meet_url=meet.meeting_uri,
+                meeting_code=meet.meeting_code,
+                meeting_name=meet.name,
+                shedule_date=date.strftime("%d/%m/%Y")
 
-        )
-        await state.set_data({"task": task})
-        await state.set_state(Form.data)
-        await callback_query.message.answer(
-            f'Вы выбрали {date.strftime("%d/%m/%Y")} \n'
-            f'Пожалуйста напишите время встречи в формате hh:mm \n'
-            f'Например 11:20',
-        )
+            )
+            await state.update_data({"task": task})
+            await state.set_state(Form.data)
+        else:
+            await callback_query.bot.edit_message_text(
+                "Нельзя выбрать прошедший день \n"
+                "Пожалуйста выберите дату: ",
+                reply_markup=await SimpleCalendar(locale="RU").start_calendar(),
+                message_id=callback_query.message.message_id,
+                chat_id=callback_query.message.chat.id
+            )
+
+
+
+
+
 
 @router.message(Form.data)
 async def adding_meet(msg: Message, state: FSMContext):
     try:
         a = time.fromisoformat(msg.text)
     except Exception:
-        await msg.answer("Неправильный формат, попробуйте еще раз")
+        m = await msg.answer("Неправильный формат, попробуйте еще раз")
+        a = await state.get_value("msg_id")
+        a.append(m.message_id)
+        await state.update_data({"msg_id": a})
     else:
-        keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
-        keyboard_inline.inline_keyboard.append([InlineKeyboardButton(text="Одноразовая", callback_data="repeat once Одноразовая"),
-                                                InlineKeyboardButton(text="Каждый день", callback_data="repeat everyday Каждый день")])
-        keyboard_inline.inline_keyboard.append([InlineKeyboardButton(text="Раз в неделю", callback_data="repeat everyweek Раз в неделю"),
-                                                InlineKeyboardButton(text="Каждый месяц", callback_data="repeat everymonth Каждый месяц")])
-        keyboard_inline.inline_keyboard.append([InlineKeyboardButton(text="Отмена", callback_data="stop")])
         task = await state.get_value("task")
         task.shedule_time = a
+        msg_id = await state.get_value("msg_id")
         await state.clear()
-        await state.set_data({"task": task})
-        await msg.answer("Выбрите количество повторений встречи: ", reply_markup=keyboard_inline)
+        for x in msg_id[1:]:
+            await msg.bot.delete_message(msg.chat.id, x)
+        await msg.bot.edit_message_text("Напишите название конференции",
+                                                 chat_id=msg.chat.id,
+                                                 message_id=msg_id[0])
+        await state.set_data({"task": task, "msg_id": [msg_id[0]]})
+        await state.set_state(Form.name)
+
+
+
 
 
 @router.callback_query()
