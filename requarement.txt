@@ -1,9 +1,0 @@
-google-api-core==2.24.0
-google-api-python-client==2.155.0
-google-apps-meet==0.1.11
-google-auth==2.37.0
-google-auth-httplib2==0.2.0
-google-auth-oauthlib==1.2.1
-aiogram==3.15.0
-aiogram-calendar==0.5.0
-SQLAlchemy==2.0.36
