@@ -1,3 +1,4 @@
+import asyncio
 import pprint
 import sqlite3
 from datetime import datetime
@@ -14,9 +15,9 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKe
 from aiogram_calendar import SimpleCalendar, SimpleCalendarCallback, DialogCalendar
 from aiogram_calendar import get_user_locale
 from sqlalchemy.orm import defer
-
 from data.users import Task
 from meet import sample_create_space, sample_get_space
+
 
 router = Router()
 from data import db_session
@@ -25,6 +26,20 @@ con = sqlite3.connect("db/users.db", check_same_thread=False)
 cur = con.cursor()
 db_session.global_init("db/users.db")
 
+
+
+def day_to_num(date):
+    dct = {
+        "понедельник": 0,
+        "вторник": 1,
+        "среда": 2,
+        "четверг": 3,
+        "пятница": 4,
+        "суббота": 5,
+        "воскресенье": 6
+
+    }
+    return dct[date]
 
 class Form(StatesGroup):
     data = State()
@@ -65,6 +80,7 @@ async def create_meet(msg: Message):
     await msg.answer(f"Ваша ссылка на конференцию - {rsp.meeting_uri} \n название конференции - {rsp.name}")
 
 
+
 # @router.message(Command("end_meeting"))
 # async def end_meeting(msg: Message):
 #    db_sess = db_session.create_session()
@@ -101,7 +117,8 @@ async def get_every_meets(clq: CallbackQuery):
                     f"Время - {str(meet.shedule_time)[:-3]} \n"
                     f"Дата - {meet.shedule_date} \n"
                     f"Частота повторений - {await get_frequency_of_meetings(str(meet.shedule_type))} \n"
-                    f"Ссылка на встречу - {meet.meet_url}"
+                    f"Ссылка на встречу - {meet.meet_url} \n"
+                    f"Удалить конференцию - /delete{meet.id}"
                     f"\n")
             keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
             keyboard_inline.inline_keyboard.append(
@@ -138,7 +155,8 @@ async def get_once_meets(clq: CallbackQuery):
                     f"Время - {str(meet.shedule_time)[:-3]} \n"
                     f"Дата - {meet.shedule_date} \n"
                     f"Частота повторений - {await get_frequency_of_meetings(str(meet.shedule_type))} \n"
-                    f"Ссылка на встречу - {meet.meet_url}"
+                    f"Ссылка на встречу - {meet.meet_url}\n"
+                    f"Удалить конференцию - /delete{meet.id}"
                     f"\n")
             keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
             keyboard_inline.inline_keyboard.append(
@@ -152,15 +170,6 @@ async def get_once_meets(clq: CallbackQuery):
                                             reply_markup=keyboard_inline,
                                             parse_mode="HTML")
 
-
-@router.callback_query(F.data.split()[0] == "delete")
-async def delete_meet(clq: CallbackQuery):
-    await clq.answer()
-    db_sess = db_session.create_session()
-    db_sess.query(Task).filter(Task.id == int(clq.data.split()[-1])).delete()
-    db_sess.commit()
-    db_sess.close()
-    await clq.message.delete()
 
 
 @router.message(Form.name)
@@ -232,7 +241,7 @@ async def everyday_meeting_plane(clq: CallbackQuery, state: FSMContext):
         meet_url=meet.meeting_uri,
         meeting_code=meet.meeting_code,
         meeting_name=meet.name,
-        shedule_date="everyday"
+        shedule_date=str(dtm.datetime.today().date())
 
     )
     await state.update_data({"task": task})
@@ -271,13 +280,19 @@ async def weekly_meeting_time(clq: CallbackQuery, state: FSMContext):
     msg = clq.message
     meet = await sample_create_space()
     st = await state.get_value("task")
+    date = dtm.datetime.today().weekday()
+    ans = ""
+    if date > day_to_num(clq.data.split()[-1]):
+        ans = dtm.datetime.today().date() +  dtm.timedelta(dtm.datetime.today().date().weekday() - day_to_num(clq.data.split()[-1]))
+    else:
+        ans = dtm.datetime.today().date()+ dtm.timedelta(day_to_num(clq.data.split()[-1]) - dtm.datetime.today().date().weekday())
     task = Task(
         shedule_type=st.shedule_type,
         user_id=msg.from_user.id,
         meet_url=meet.meeting_uri,
         meeting_code=meet.meeting_code,
         meeting_name=meet.name,
-        shedule_date=clq.data.split()[-1]
+        shedule_date=str(ans)
 
     )
     await state.update_data({"task": task})
@@ -327,7 +342,8 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
                 f'Вы выбрали {date.strftime("%d/%m/%Y")} \n'
                 f'Пожалуйста напишите время встречи в формате hh:mm \n'
                 f'Например 11:20', chat_id=callback_query.message.chat.id,
-                message_id=callback_query.message.message_id
+                message_id=callback_query.message.message_id,
+                reply_markup=None
             )
             await state.update_data({"msg_id": [msg.message_id]})
             msg = callback_query.message
@@ -339,7 +355,7 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
                 meet_url=meet.meeting_uri,
                 meeting_code=meet.meeting_code,
                 meeting_name=meet.name,
-                shedule_date=date.strftime("%d/%m/%Y")
+                shedule_date=date.strftime("%Y/%m/%d")
 
             )
             await state.update_data({"task": task})
@@ -385,3 +401,12 @@ async def stop(clq: CallbackQuery):
 @router.callback_query()
 def foo(clq: CallbackQuery):
     print(clq.data)
+
+
+@router.message(F.text[:7] == "/delete")
+async def delete_meet(msg: Message):
+    db_sess = db_session.create_session()
+    print(msg.text[7:])
+    print(db_sess.query(Task).filter(Task.id == int(msg.text[7:])).delete())
+    db_sess.commit()
+    db_sess.close()
