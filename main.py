@@ -1,23 +1,22 @@
 import asyncio
 import calendar
-import json
+import datetime
 import logging
 import sqlite3
-import datetime
-from pprint import pprint
+import threading
+import time
 
 import requests
-
-from data import db_session
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
-from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from decouple import config
-from handlers import router
+
+from data import db_session
 from data.users import Task
-import time
-import threading
+from handlers import router
+
 token = config("BOT_TOKEN")
 con = sqlite3.connect("db/users.db", check_same_thread=False)
 cur = con.cursor()

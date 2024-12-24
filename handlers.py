@@ -1,22 +1,17 @@
-import asyncio
-import pprint
 import sqlite3
 from datetime import datetime
 import datetime as dtm
 from datetime import time
-from aiogram.fsm.context import FSMContext
 from aiogram import Router, F, types
-from aiogram.filters import Filter
 from aiogram.filters import Command
 from aiogram.filters.callback_data import CallbackData
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup
-from aiogram_calendar import SimpleCalendar, SimpleCalendarCallback, DialogCalendar
+from aiogram_calendar import SimpleCalendar, SimpleCalendarCallback
 from aiogram_calendar import get_user_locale
-from sqlalchemy.orm import defer
 from data.users import Task
-from meet import sample_create_space, sample_get_space
+from meet import sample_create_space
 
 
 router = Router()
@@ -410,3 +405,4 @@ async def delete_meet(msg: Message):
     print(db_sess.query(Task).filter(Task.id == int(msg.text[7:])).delete())
     db_sess.commit()
     db_sess.close()
+    
