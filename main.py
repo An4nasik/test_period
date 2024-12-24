@@ -66,7 +66,7 @@ def reminder():
         db_sess.close()
         for task in tasks:
             if task.shedule_type == "once":
-                if ((datetime.datetime.now() - datetime.timedelta(days=0, minutes=5)).time() <= datetime.datetime.strptime(str(task.shedule_time), "%H:%M:%S").now(datetime.UTC).time()
+                if ((datetime.datetime.now() - datetime.timedelta(days=0, minutes=5)).time() <= datetime.datetime.strptime(str(task.shedule_time), "%H:%M:%S").time()
                         <= (datetime.datetime.now() + datetime.timedelta(days=0, minutes=5)).time()):
                     send(task)
                     db_sess = db_session.create_session()
@@ -78,7 +78,7 @@ def reminder():
                                                         "%Y/%m/%d").date() == datetime.datetime.today().date():
                 if ((datetime.datetime.now() - datetime.timedelta(days=0,
                                                                minutes=5)).time() <= datetime.datetime.strptime(
-                    str(task.shedule_time), "%H:%M:%S").now(datetime.UTC).time()
+                    str(task.shedule_time), "%H:%M:%S").time()
                  <= (datetime.datetime.now() + datetime.timedelta(days=0, minutes=5)).time()):
                     send(task)
                     db_sess = db_session.create_session()
@@ -91,7 +91,7 @@ def reminder():
                                                                        "%Y/%m/%d").date() == datetime.datetime.today().date():
                     if ((datetime.datetime.now() - datetime.timedelta(days=0,
                                                                       minutes=5)).time() <= datetime.datetime.strptime(
-                            str(task.shedule_time), "%H:%M:%S").now(datetime.UTC).time()
+                            str(task.shedule_time), "%H:%M:%S").time()
                             <= (datetime.datetime.now() + datetime.timedelta(days=0, minutes=5)).time()):
                         send(task)
                         db_sess = db_session.create_session()
@@ -105,7 +105,7 @@ def reminder():
                                                                        "%Y/%m/%d").date() == datetime.datetime.today().date():
                     if ((datetime.datetime.now() - datetime.timedelta(days=0,
                                                                       minutes=5)).time() <= datetime.datetime.strptime(
-                        str(task.shedule_time), "%H:%M:%S").now(datetime.UTC).time()
+                        str(task.shedule_time), "%H:%M:%S").time()
                             <= (datetime.datetime.now() + datetime.timedelta(days=0, minutes=5)).time()):
                         send(task)
                         db_sess = db_session.create_session()
