@@ -1,12 +1,8 @@
 from google.oauth2.credentials import Credentials
 from google.apps import meet_v2
-from google.apps import meet_v2beta
 import asyncio
-
-from sqlalchemy.util import await_only
-
 SCOPES = ['https://www.googleapis.com/auth/meetings.space.created']
-creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+creds = Credentials.from_authorized_user_file('tets_toke.json', SCOPES)
 # TODO(developer) - Надо переделать на получение токена из .env.
 async def sample_create_space():
     # Create a client
@@ -19,22 +15,6 @@ async def sample_create_space():
     response = await client.create_space(request=request)
     # Handle the response
     return response
-
-async def sample_get_space(name):
-    # Create a client
-    client = meet_v2.SpacesServiceAsyncClient(credentials=creds)
-
-    # Initialize request argument(s)
-    request = meet_v2.GetSpaceRequest(
-        name=name,
-    )
-
-    # Make the request
-    response = await client.get_space(request=request)
-
-    # Handle the response
-    return response
-
 
 async def sample_list_conference_records():
     # Create a client
@@ -50,7 +30,20 @@ async def sample_list_conference_records():
     # Handle the response
     return page_result
 
+async def sample_get_space(name):
+    # Create a client
+    client = meet_v2.SpacesServiceAsyncClient(credentials=creds)
 
+    # Initialize request argument(s)
+    request = meet_v2.GetSpaceRequest(
+        name=name,
+    )
+
+    # Make the request
+    response = await client.get_space(request=request)
+
+    # Handle the response
+    return response
 
 async def end(sapace):
     client = meet_v2.SpacesServiceAsyncClient(credentials=creds)
