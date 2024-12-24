@@ -398,11 +398,11 @@ def foo(clq: CallbackQuery):
     print(clq.data)
 
 
-@router.message(F.text[:7] == "/delete")
+@router.message(F.text.split("@")[0][:7] == "/delete")
 async def delete_meet(msg: Message):
     db_sess = db_session.create_session()
-    print(msg.text[7:])
-    print(db_sess.query(Task).filter(Task.id == int(msg.text[7:])).delete())
+    print(msg.split("@")[0][:7])
+    print(db_sess.query(Task).filter(Task.id == int(msg.text.split("@")[0][7:])).delete())
     db_sess.commit()
     db_sess.close()
     
