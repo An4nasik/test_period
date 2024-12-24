@@ -401,7 +401,16 @@ def foo(clq: CallbackQuery):
 @router.message(F.text.split("@")[0][:7] == "/delete")
 async def delete_meet(msg: Message):
     db_sess = db_session.create_session()
-    task = db_sess.query(Task).filter(Task.id == int(msg.text.split("@")[0][7:])).all()
+    task = db_sess.query(Task).filter(Task.id == int(msg.text.split("@")[0][7:])).first()
+    keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[])
+    keyboard_inline.inline_keyboard.append([InlineKeyboardButton(text="Регулярные", callback_data="every 0"),
+                                            InlineKeyboardButton(text="Разовые", callback_data="once 0")])
+    keyboard_inline.inline_keyboard.append(
+        [InlineKeyboardButton(text="убрать", callback_data="stop")])
+    await msg.answer(f"Конференция {task.meeting_name}\n"
+                     f"С датой проведения {task.shedule_date}\n"
+                     f"была удалена\n"
+                     f"Для обновления расписания вызовите его заново", reply_markup=keyboard_inline)
     db_sess.query(Task).filter(Task.id == int(msg.text.split("@")[0][7:])).delete()
     db_sess.commit()
     db_sess.close()

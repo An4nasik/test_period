@@ -124,4 +124,3 @@ if __name__ == "__main__":
     thread = threading.Thread(target=reminder)
     thread.start()
     asyncio.run(main())
-
