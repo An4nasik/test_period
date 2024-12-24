@@ -61,6 +61,7 @@ def day_to_num(date):
 
 def reminder():
     while True:
+        print("цикл")
         db_sess = db_session.create_session()
         tasks = list(db_sess.query(Task).all())
         db_sess.close()
