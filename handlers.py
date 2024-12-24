@@ -318,7 +318,7 @@ async def one_meeting_plane(clq: CallbackQuery, state: FSMContext):
     await state.set_data({"task": tsk})
     await clq.bot.edit_message_text(
         "Пожалуйста выберите дату: ",
-        reply_markup=await SimpleCalendar(locale="RU").start_calendar(),
+        reply_markup=await SimpleCalendar(locale="ru_RU").start_calendar(),
         message_id=clq.message.message_id,
         chat_id=clq.message.chat.id
     )
@@ -327,7 +327,7 @@ async def one_meeting_plane(clq: CallbackQuery, state: FSMContext):
 @router.callback_query(SimpleCalendarCallback.filter())
 async def process_simple_calendar(callback_query: CallbackQuery, callback_data: CallbackData, state: FSMContext):
     calendar = SimpleCalendar(
-        locale=await get_user_locale(callback_query.from_user), show_alerts=True
+        locale="ru_RU", show_alerts=True
     )
     calendar.set_dates_range(datetime(2022, 1, 1), datetime(2025, 12, 31))
     selected, date = await calendar.process_selection(callback_query, callback_data)
@@ -401,7 +401,8 @@ def foo(clq: CallbackQuery):
 @router.message(F.text.split("@")[0][:7] == "/delete")
 async def delete_meet(msg: Message):
     db_sess = db_session.create_session()
-    print(db_sess.query(Task).filter(Task.id == int(msg.text.split("@")[0][7:])).delete())
+    task = db_sess.query(Task).filter(Task.id == int(msg.text.split("@")[0][7:])).all()
+    db_sess.query(Task).filter(Task.id == int(msg.text.split("@")[0][7:])).delete()
     db_sess.commit()
     db_sess.close()
     
