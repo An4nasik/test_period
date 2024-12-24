@@ -303,7 +303,7 @@ async def one_meeting_plane(clq: CallbackQuery, state: FSMContext):
     await state.set_data({"task": tsk})
     await clq.bot.edit_message_text(
         "Пожалуйста выберите дату: ",
-        reply_markup=await SimpleCalendar(locale="RU").start_calendar(),
+        reply_markup=await SimpleCalendar().start_calendar(),
         message_id=clq.message.message_id,
         chat_id=clq.message.chat.id
     )
@@ -318,7 +318,7 @@ async def one_meeting_plane(clq: CallbackQuery, state: FSMContext):
     await state.set_data({"task": tsk})
     await clq.bot.edit_message_text(
         "Пожалуйста выберите дату: ",
-        reply_markup=await SimpleCalendar(locale="ru_RU").start_calendar(),
+        reply_markup=await SimpleCalendar().start_calendar(),
         message_id=clq.message.message_id,
         chat_id=clq.message.chat.id
     )
@@ -327,7 +327,7 @@ async def one_meeting_plane(clq: CallbackQuery, state: FSMContext):
 @router.callback_query(SimpleCalendarCallback.filter())
 async def process_simple_calendar(callback_query: CallbackQuery, callback_data: CallbackData, state: FSMContext):
     calendar = SimpleCalendar(
-        locale="ru_RU", show_alerts=True
+         show_alerts=True
     )
     calendar.set_dates_range(datetime(2022, 1, 1), datetime(2025, 12, 31))
     selected, date = await calendar.process_selection(callback_query, callback_data)
@@ -359,7 +359,7 @@ async def process_simple_calendar(callback_query: CallbackQuery, callback_data: 
             await callback_query.bot.edit_message_text(
                 "Нельзя выбрать прошедший день \n"
                 "Пожалуйста выберите дату: ",
-                reply_markup=await SimpleCalendar(locale="RU").start_calendar(),
+                reply_markup=await SimpleCalendar().start_calendar(),
                 message_id=callback_query.message.message_id,
                 chat_id=callback_query.message.chat.id
             )
