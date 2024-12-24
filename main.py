@@ -67,7 +67,7 @@ def reminder():
         for task in tasks:
             if task.shedule_type == "once":
                 if ((datetime.datetime.now(pytz.timezone('Europe/Moscow')) - datetime.timedelta(days=0, minutes=1)).time() <= datetime.datetime.strptime(str(task.shedule_time), "%H:%M:%S").time()
-                        <= (datetime.datetime.now(pytz.timezone('Europe/Moscow')) + datetime.timedelta(days=0, minutes=5)).time()):
+                        <= (datetime.datetime.now(pytz.timezone('Europe/Moscow')) + datetime.timedelta(days=0, minutes=1)).time()):
                     send(task)
                     db_sess = db_session.create_session()
                     db_sess.query(Task).filter(Task.id == task.id).delete()
