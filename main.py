@@ -41,7 +41,7 @@ def send(task):
     keyboard_inline.inline_keyboard.append(
         [InlineKeyboardButton(text="убрать", callback_data="stop")])
     text = f"<b>Напоминание о конференции!</b>\n<b>{task.meeting_name}</b> \nДата - {task.shedule_date} \nВремя - {task.shedule_time} \nСсылка - {task.meet_url}"
-    requests.post(f"https://api.telegram.org/bot{config("BOT_TOKEN")}/sendMessage?chat_id={int(task.chat_id)}&text={text}&parse_mode=HTML")
+    requests.post(f"https://api.telegram.org/bot{token}/sendMessage?chat_id={int(task.chat_id)}&text={text}&parse_mode=HTML")
 
 
 
