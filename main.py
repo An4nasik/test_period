@@ -79,7 +79,7 @@ def reminder():
                 if ((datetime.datetime.now(pytz.timezone('Europe/Moscow')) - datetime.timedelta(days=0,
                                                                minutes=1)).time() <= datetime.datetime.strptime(
                     str(task.shedule_time), "%H:%M:%S").time()
-                 <= (datetime.datetime.now(pytz.timezone('Europe/Moscow')) + datetime.timedelta(days=0, minutes=5)).time()):
+                 <= (datetime.datetime.now(pytz.timezone('Europe/Moscow')) + datetime.timedelta(days=0, minutes=1)).time()):
                     send(task)
                     db_sess = db_session.create_session()
                     db_sess.query(Task).filter(Task.id == task.id).update({Task.shedule_date: datetime.datetime.strptime(str(task.shedule_date).replace("-", "/"),
@@ -92,7 +92,7 @@ def reminder():
                     if ((datetime.datetime.now(pytz.timezone('Europe/Moscow')) - datetime.timedelta(days=0,
                                                                       minutes=1)).time() <= datetime.datetime.strptime(
                             str(task.shedule_time), "%H:%M:%S").time()
-                            <= (datetime.datetime.now(pytz.timezone('Europe/Moscow')) + datetime.timedelta(days=0, minutes=5)).time()):
+                            <= (datetime.datetime.now(pytz.timezone('Europe/Moscow')) + datetime.timedelta(days=0, minutes=1)).time()):
                         send(task)
                         db_sess = db_session.create_session()
                         db_sess.query(Task).filter(Task.id == task.id).update(
@@ -106,7 +106,7 @@ def reminder():
                     if ((datetime.datetime.now() - datetime.timedelta(days=0,
                                                                       minutes=1)).time() <= datetime.datetime.strptime(
                         str(task.shedule_time), "%H:%M:%S").time()
-                            <= (datetime.datetime.now() + datetime.timedelta(days=0, minutes=5)).time()):
+                            <= (datetime.datetime.now() + datetime.timedelta(days=0, minutes=1)).time()):
                         send(task)
                         db_sess = db_session.create_session()
                         date = datetime.datetime.today().date()
